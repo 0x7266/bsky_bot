@@ -1,0 +1,24 @@
+{
+	"name": "bot",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/bot.js",
+	"scripts": {
+		"build": "tsc",
+		"start": "rm -rf ./dist && tsc && node ./dist"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@atproto/api": "^0.2.11",
+		"dotenv": "^16.0.3",
+		"snoostorm": "^1.5.2",
+		"snoowrap": "^1.23.0"
+	},
+	"devDependencies": {
+		"@types/dotenv": "^8.2.0",
+		"@types/node": "^18.16.3",
+		"typescript": "^5.0.4"
+	}
+}
