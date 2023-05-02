@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@atproto/api": "^0.2.11",
 		"dotenv": "^16.0.3",
+		"jimp": "^0.22.7",
 		"snoostorm": "^1.5.2",
 		"snoowrap": "^1.23.0"
 	},

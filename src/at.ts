@@ -1,5 +1,6 @@
 import fs from "fs";
 import { BskyAgent, RichText } from "@atproto/api";
+
 const agent = new BskyAgent({ service: "https://bsky.social/" });
 
 type Post = {
@@ -21,7 +22,7 @@ async function postToBsky(post: Post) {
 		encoding: "image/jpeg",
 	});
 	if (!resp.success) {
-		const msg = `Unable to upload image ${path}`;
+		const msg = `🚫 Unable to upload image ${path}`;
 		console.error(msg, resp);
 		throw new Error(msg);
 	}
@@ -35,14 +36,24 @@ async function postToBsky(post: Post) {
 		facets: [
 			{
 				index: { byteStart: 0, byteEnd: text.indexOf("\nby ") },
-				features: [{ $type: "link", uri: `https://reddit.com/${postUrl}` }],
+				features: [
+					{
+						$type: "app.bsky.richtext.facet#link",
+						uri: `https://reddit.com${postUrl}`,
+					},
+				],
 			},
 			{
 				index: {
 					byteStart: text.indexOf(" u/") + 1,
 					byteEnd: text.length,
 				},
-				features: [{ $type: "link", uri: `https://reddit.com/u/${author}` }],
+				features: [
+					{
+						$type: "app.bsky.richtext.facet#link",
+						uri: `https://reddit.com/u/${author}`,
+					},
+				],
 			},
 		],
 	});
@@ -55,7 +66,7 @@ async function postToBsky(post: Post) {
 			images: [{ image, alt: title }],
 		},
 	});
-	console.log("done");
+	console.log("🎉 You've just skeeted!");
 }
 
 export { postToBsky };
