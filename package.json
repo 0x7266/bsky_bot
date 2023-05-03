@@ -4,6 +4,7 @@
 	"description": "",
 	"main": "dist/bot.js",
 	"scripts": {
+		"dev": "tsnd --respawn -- src/ ",
 		"build": "tsc",
 		"start": "rm -rf ./dist && tsc && node ./dist"
 	},

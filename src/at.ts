@@ -7,22 +7,22 @@ type Post = {
 	postUrl: string;
 	title: string;
 	author: string;
-	imageUrl: string;
-	path: string;
+	authorUrl: string;
+	imgPath: string;
 };
 
 async function postToBsky(post: Post) {
-	const { postUrl, title, author, imageUrl, path } = post;
+	const { postUrl, title, author, authorUrl, imgPath } = post;
 	await agent.login({
 		identifier: process.env.BLUESKY_BOT_EMAIL || "email",
 		password: process.env.BLUESKY_BOT_PASSWORD || "password",
 	});
-	const data = fs.readFileSync(path);
+	const data = fs.readFileSync(imgPath);
 	const resp = await agent.uploadBlob(data, {
 		encoding: "image/jpeg",
 	});
 	if (!resp.success) {
-		const msg = `🚫 Unable to upload image ${path}`;
+		const msg = `🚫 Unable to upload image ${imgPath}`;
 		console.error(msg, resp);
 		throw new Error(msg);
 	}
@@ -39,7 +39,7 @@ async function postToBsky(post: Post) {
 				features: [
 					{
 						$type: "app.bsky.richtext.facet#link",
-						uri: `https://reddit.com${postUrl}`,
+						uri: postUrl,
 					},
 				],
 			},
@@ -51,7 +51,7 @@ async function postToBsky(post: Post) {
 				features: [
 					{
 						$type: "app.bsky.richtext.facet#link",
-						uri: `https://reddit.com/u/${author}`,
+						uri: authorUrl,
 					},
 				],
 			},
@@ -66,7 +66,7 @@ async function postToBsky(post: Post) {
 			images: [{ image, alt: title }],
 		},
 	});
-	console.log("🎉 You've just skeeted!");
+	console.log("🎉 Skeeted");
 }
 
 export { postToBsky };
