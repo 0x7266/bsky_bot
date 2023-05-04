@@ -3,7 +3,7 @@ import fs from "fs";
 import Snoowrap from "snoowrap";
 import { SubmissionStream } from "snoostorm";
 import Jimp from "jimp";
-import { postToBsky } from "./at";
+import { postToBsky } from "./utils/postToBsky";
 import { saveImage } from "./utils/saveImage";
 import { GallerySubmission } from "./interfaces/GallerySubmission";
 
@@ -17,39 +17,49 @@ const r = new Snoowrap({
 
 const stream = new SubmissionStream(r, {
 	subreddit: "mechanicalkeyboards",
-	limit: 1,
+	limit: 5,
 });
 
 stream.on("item", async (post: Snoowrap.Submission) => {
 	// console.log(post);
 	try {
-		// if ("is_gallery" in post && post.is_gallery) {
-		// 	const galleryPost = post as GallerySubmission;
-		// 	const metadataKeys = galleryPost.media_metadata;
-		// 	Object.keys(galleryPost.media_metadata).map(async (key) => {
-		// 		await saveImage(key);
-		// 	});
-		// }
-		const { permalink, title, author, is_video, post_hint } = post;
-		if (post.post_hint !== "image") {
-			console.log("🚫 Not a valid post format");
-			return;
-		}
-		if (is_video) {
+		// const { permalink, url, title, author, is_video, post_hint } = post;
+		// const url = "https://i.redd.it/ny2gw16elgxa1.png"; // test
+		if (post.is_video) {
 			console.log("🚫 New post is a video");
 			return;
 		}
-		const url = "https://i.redd.it/ny2gw16elgxa1.png"; // test
-		const imgId = url.slice(18, url.length - 4);
-		const imgPath = `./images/${imgId}`;
-		await saveImage(imgId);
-		// 	await postToBsky({
-		// 		postUrl: `https://reddit.com${permalink}`,
-		// 		title,
-		// 		author: author.name,
-		// 		authorUrl: `https://reddit.com/u/${author.name}`,
-		// 		imgPath,
-		// 	});
+		if ("is_gallery" in post && post.is_gallery) {
+			console.log(post);
+			const galleryPost = post as GallerySubmission;
+			const metadataKeys = galleryPost.media_metadata;
+			Object.keys(galleryPost.media_metadata).map(async (key) => {
+				const imageIdAndFormat = `${key}.${galleryPost.media_metadata[
+					key
+				].m.slice(6)}`;
+				await saveImage(imageIdAndFormat);
+				await postToBsky({
+					postUrl: `https://reddit.com${post.permalink}`,
+					title: post.title,
+					author: post.author.name,
+					authorUrl: `https://reddit.com/u/${post.author.name}`,
+					imgPath: `./images/${imageIdAndFormat}`,
+				});
+			});
+		}
+		if (post.post_hint === "image") {
+			return;
+			const imgIdAndFormat = post.url.slice(18);
+			const imgPath = `./images/${imgIdAndFormat}`;
+			await saveImage(imgIdAndFormat);
+			await postToBsky({
+				postUrl: `https://reddit.com${post.permalink}`,
+				title: post.title,
+				author: post.author.name,
+				authorUrl: `https://reddit.com/u/${post.author.name}`,
+				imgPath: `./images/${imgIdAndFormat}`,
+			});
+		}
 	} catch (error) {
 		console.error(error);
 	}
