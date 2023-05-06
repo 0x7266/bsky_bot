@@ -3,6 +3,7 @@ import { compressImage } from "./compressImage";
 
 async function saveImage(imageIdAndFormat: string) {
 	const imgUrl = `https://i.redd.it/${imageIdAndFormat}`;
+	//COMPRESS IMAGE MUST GO HERE
 	const imgPath = `./images/${imageIdAndFormat}`;
 	const response = await fetch(imgUrl);
 	const blob = await response.blob();

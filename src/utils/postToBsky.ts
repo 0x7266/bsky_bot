@@ -34,6 +34,7 @@ async function postToBsky(post: Post) {
 		images.push(image);
 	}
 	const text = `${title}\nby u/${author}\n`;
+	console.log({title}, {author})
 	const rt = new RichText({
 		text,
 		facets: [
@@ -65,7 +66,7 @@ async function postToBsky(post: Post) {
 		facets: rt.facets,
 		embed: {
 			$type: "app.bsky.embed.images",
-			images: images.slice(0, 4).map((image) => ({ image, alt: title })),
+			images: images.slice(images.length - 4).map((image) => ({ image, alt: title })),
 		},
 	});
 	console.log("🎉 Skeeted");
