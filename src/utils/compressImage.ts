@@ -1,14 +1,17 @@
 import fs from "fs";
 import Jimp from "jimp";
 
-async function compressImage(imgSize: number, imgPath: string) {
-	console.log(`🚨 File is too large: ${imgSize}`);
+async function compressImage(imgSize: number, imgPath: string, newWidth: number = 1280) {
+	console.log(`🚨 ${imgPath} is too large: ${imgSize}`);
+	console.log(`⏳ Resizing...`);
 	const image = await Jimp.read(imgPath);
-	image.resize(1280, Jimp.AUTO);
+	image.resize(newWidth, Jimp.AUTO);
 	await image.writeAsync(imgPath);
 	let resizedImgSize = fs.statSync(imgPath).size;
-	console.log(`✅ Resized: ${resizedImgSize}`);
-	// if (resizedImgSize > 976560)  {}
+	console.log(`✅ ${imgPath} resized: ${resizedImgSize}`);
+	if (resizedImgSize > 976560)  {
+        	await compressImage(resizedImgSize, imgPath, newWidth * .9);
+        }
 }
 
 export { compressImage };
