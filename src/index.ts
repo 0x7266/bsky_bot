@@ -27,11 +27,11 @@ stream.on("item", async (post: Snoowrap.Submission) => {
 			const galleryPost = post as GallerySubmission;
 			const metadataKeys = galleryPost.media_metadata;
 			for (const key of Object.keys(galleryPost.media_metadata)) {
-				const imageIdAndFormat = `${key}.${galleryPost.media_metadata[
+				const imgIdAndFormat= `${key}.${galleryPost.media_metadata[
 					key
 				].m.slice(6)}`;
-				imgPaths.push(`./images/${imageIdAndFormat}`);
-				await saveImage(imageIdAndFormat);
+				imgPaths.push(`./images/${imgIdAndFormat}`); 
+				await saveImage(`https://i.redd.it/${imgIdAndFormat}`, imgIdAndFormat);
 			}
 			postToBsky({
 				postUrl: `https://reddit.com${post.permalink}`,
@@ -42,9 +42,16 @@ stream.on("item", async (post: Snoowrap.Submission) => {
 			});
 		}
 		if (post.post_hint === "image") {
-			const imgIdAndFormat = post.url.slice(18);
-			const imgPath = `./images/${imgIdAndFormat}`;
-			await saveImage(imgIdAndFormat);
+			let imgIdAndFormat: string = "";
+			let imgUrl: string = "";
+			if (post.url.includes("imgur")) {
+				imgIdAndFormat = post.url.slice(20);
+				imgUrl = `https://i.imgur.com/${imgIdAndFormat}`;
+			} else {
+				imgIdAndFormat = post.url.slice(18);
+				imgUrl = `https://i.redd.it/${imgIdAndFormat}`;
+			}
+			await saveImage(imgUrl, imgIdAndFormat);
 			await postToBsky({
 				postUrl: `https://reddit.com${post.permalink}`,
 				title: post.title,

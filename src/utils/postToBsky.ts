@@ -13,6 +13,7 @@ type Post = {
 
 async function postToBsky(post: Post) {
 	const { postUrl, title, author, authorUrl, imgPaths } = post;
+	console.log({imgPaths});
 	await agent.login({
 		identifier: process.env.BLUESKY_BOT_EMAIL || "email",
 		password: process.env.BLUESKY_BOT_PASSWORD || "password",
@@ -66,7 +67,7 @@ async function postToBsky(post: Post) {
 		facets: rt.facets,
 		embed: {
 			$type: "app.bsky.embed.images",
-			images: images.slice(images.length - 4).map((image) => ({ image, alt: title })),
+			images: images.slice(images.length - 4).map((image) => ({ image, alt: `${title}_1` })),
 		},
 	});
 	console.log("🎉 Skeeted");
