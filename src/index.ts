@@ -3,8 +3,9 @@ import fs from "fs";
 import Snoowrap from "snoowrap";
 import { SubmissionStream } from "snoostorm";
 import Jimp from "jimp";
-import { postToBsky } from "./at";
-import { downloadImage } from "./downloadImage";
+import { postToBsky } from "./utils/postToBsky";
+import { saveImage } from "./utils/saveImage";
+import { GallerySubmission } from "./interfaces/GallerySubmission";
 
 const r = new Snoowrap({
 	userAgent: "reddit-bot-example-node",
@@ -16,38 +17,46 @@ const r = new Snoowrap({
 
 const stream = new SubmissionStream(r, {
 	subreddit: "mechanicalkeyboards",
-	limit: 6,
+	limit: 1,
 });
 
-stream.on("item", async (post) => {
+stream.on("item", async (post: Snoowrap.Submission) => {
 	try {
-		if (post.post_hint !== "image") {
-			return;
+		if ("is_gallery" in post && post.is_gallery) {
+			const imgPaths: string[] = [];
+			const galleryPost = post as GallerySubmission;
+			const metadataKeys = galleryPost.media_metadata;
+			for (const key of Object.keys(galleryPost.media_metadata)) {
+				const imageIdAndFormat = `${key}.${galleryPost.media_metadata[
+					key
+				].m.slice(6)}`;
+				imgPaths.push(`./images/${imageIdAndFormat}`);
+				await saveImage(imageIdAndFormat);
+			}
+			postToBsky({
+				postUrl: `https://reddit.com${post.permalink}`,
+				title: post.title,
+				author: post.author.name,
+				authorUrl: `https://reddit.com/u/${post.author.name}`,
+				imgPaths,
+			});
 		}
-		const { permalink, url, title, author, is_video } = post;
-		// const url = "https://i.redd.it/ny2gw16elgxa1.png"; // test
-		const imgPath = `./images/${url.slice(18)}`;
-		if (is_video) {
+		if (post.post_hint === "image") {
+			const imgIdAndFormat = post.url.slice(18);
+			const imgPath = `./images/${imgIdAndFormat}`;
+			await saveImage(imgIdAndFormat);
+			await postToBsky({
+				postUrl: `https://reddit.com${post.permalink}`,
+				title: post.title,
+				author: post.author.name,
+				authorUrl: `https://reddit.com/u/${post.author.name}`,
+				imgPaths: [`./images/${imgIdAndFormat}`],
+			});
+		}
+		if (post.is_video) {
 			console.log("🚫 New post is a video");
 			return;
 		}
-		await downloadImage(url, imgPath);
-		let imgInfo = fs.statSync(imgPath);
-		if (imgInfo.size > 976560) {
-			console.log(`🚨 File is too large: ${imgInfo.size}`);
-			const image = await Jimp.read(imgPath);
-			image.resize(1280, Jimp.AUTO);
-			await image.writeAsync(imgPath);
-			let resizedImgInfo = fs.statSync(imgPath);
-			console.log(`✅ Resized: ${resizedImgInfo.size}`);
-		}
-		await postToBsky({
-			postUrl: `https://reddit.com${permalink}`,
-			title,
-			author: author.name,
-			authorUrl: `https://reddit.com/u/${author.name}`,
-			imgPath,
-		});
 	} catch (error) {
 		console.error(error);
 	}

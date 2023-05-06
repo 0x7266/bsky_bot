@@ -1,5 +1,5 @@
 import fs from "fs";
-import { BskyAgent, RichText } from "@atproto/api";
+import { BlobRef, BskyAgent, RichText } from "@atproto/api";
 
 const agent = new BskyAgent({ service: "https://bsky.social/" });
 
@@ -8,29 +8,33 @@ type Post = {
 	title: string;
 	author: string;
 	authorUrl: string;
-	imgPath: string;
+	imgPaths: string[];
 };
 
 async function postToBsky(post: Post) {
-	const { postUrl, title, author, authorUrl, imgPath } = post;
+	const { postUrl, title, author, authorUrl, imgPaths } = post;
 	await agent.login({
 		identifier: process.env.BLUESKY_BOT_EMAIL || "email",
 		password: process.env.BLUESKY_BOT_PASSWORD || "password",
 	});
-	const data = fs.readFileSync(imgPath);
-	const resp = await agent.uploadBlob(data, {
-		encoding: "image/jpeg",
-	});
-	if (!resp.success) {
-		const msg = `🚫 Unable to upload image ${imgPath}`;
-		console.error(msg, resp);
-		throw new Error(msg);
+	const images: BlobRef[] = [];
+	for (const imgPath of imgPaths) {
+		const data = fs.readFileSync(imgPath);
+		const resp = await agent.uploadBlob(data, {
+			encoding: "image/jpeg",
+		});
+		if (!resp.success) {
+			const msg = `🚫 Unable to upload image ${imgPath}`;
+			console.error(msg, resp);
+			throw new Error(msg);
+		}
+		const {
+			data: { blob: image },
+		} = resp;
+		images.push(image);
 	}
-	const {
-		data: { blob: image },
-	} = resp;
-
 	const text = `${title}\nby u/${author}\n`;
+	console.log({title}, {author})
 	const rt = new RichText({
 		text,
 		facets: [
@@ -57,13 +61,12 @@ async function postToBsky(post: Post) {
 			},
 		],
 	});
-	// await rt.detectFacets(agent);
 	await agent.post({
 		text: rt.text,
 		facets: rt.facets,
 		embed: {
 			$type: "app.bsky.embed.images",
-			images: [{ image, alt: title }],
+			images: images.slice(images.length - 4).map((image) => ({ image, alt: title })),
 		},
 	});
 	console.log("🎉 Skeeted");
