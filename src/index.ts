@@ -17,11 +17,15 @@ const r = new Snoowrap({
 
 const stream = new SubmissionStream(r, {
 	subreddit: "mechanicalkeyboards",
-	limit: 1,
+	limit: 2, 
 });
 
 stream.on("item", async (post: Snoowrap.Submission) => {
 	try {
+		if (post.link_flair_text === "Discussion") {
+			return;
+		}
+		console.log(post)
 		if ("is_gallery" in post && post.is_gallery) {
 			const imgPaths: string[] = [];
 			const galleryPost = post as GallerySubmission;
